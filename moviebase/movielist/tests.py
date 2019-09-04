@@ -16,7 +16,7 @@ class MovieTestCase(APITestCase):
             Person.objects.create(name=self.faker.name())
         for _ in range(3):
             self._create_fake_movie()
-        self.movie_id = Movie.objects.first().id
+        self.movie_id = Movie.objects.all()[randint(0, 2)].id
 
     def _random_person(self):
         """Return a random Person object from db."""
@@ -43,7 +43,6 @@ class MovieTestCase(APITestCase):
         actors = sample(list(people), randint(1, len(people)))
         actor_names = [a.name for a in actors]
         movie_data["actors"] = actor_names
-        print(movie_data["title"])
         return movie_data
 
     def _create_fake_movie(self):
