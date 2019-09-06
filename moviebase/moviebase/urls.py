@@ -18,10 +18,17 @@ from django.urls import re_path
 from django.contrib import admin
 
 from movielist.views import MovieListView, MovieView
-
+from showtimes.views import (
+    CinemaListView, CinemaView,
+    ScreeningListView, ScreeningsView,
+)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     re_path(r'^movies/$', MovieListView.as_view(), name='movie-list-view'),
     re_path(r'^movies/(?P<pk>[0-9]+)/$', MovieView.as_view(), name='movie-detail-view'),
+    re_path(r'^cinemas/$', CinemaListView.as_view(), name='cinema-list-view'),
+    re_path(r'^cinemas/(?P<pk>[0-9]+)/$', CinemaView.as_view(), name='cinema-detail-view'),
+    re_path(r'^screenings/$', ScreeningListView.as_view(), name='screening-list-view'),
+    re_path(r'^screenings/(?P<pk>[0-9]+)/$', ScreeningsView.as_view(), name='screening-detail-view'),
 ]
