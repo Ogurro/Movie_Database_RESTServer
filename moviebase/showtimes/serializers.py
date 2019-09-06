@@ -1,3 +1,4 @@
+from django.urls import reverse_lazy
 from rest_framework import serializers
 from .models import Cinema, Screening
 from movielist.models import Movie
@@ -6,10 +7,11 @@ from movielist.models import Movie
 class CinemaMovieListSerializer(serializers.ModelSerializer):
     movie_id = serializers.ReadOnlyField(source='movie.id')
     movie_title = serializers.ReadOnlyField(source='movie.title')
+    movie_url = serializers.HyperlinkedRelatedField(view_name='movie-detail-view', source='movie.id', read_only=True)
 
     class Meta:
         model = Screening
-        fields = ('movie_id', 'movie_title',)
+        fields = ('movie_id', 'movie_title', 'movie_url')
 
 
 class CinemaSerializer(serializers.ModelSerializer):
