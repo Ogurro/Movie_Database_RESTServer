@@ -3,10 +3,21 @@ from .models import Cinema, Screening
 from movielist.models import Movie
 
 
+class CinemaMovieListSerializer(serializers.ModelSerializer):
+    movie_id = serializers.ReadOnlyField(source='movie.id')
+    movie_title = serializers.ReadOnlyField(source='movie.title')
+
+    class Meta:
+        model = Screening
+        fields = ('movie_id', 'movie_title',)
+
+
 class CinemaSerializer(serializers.ModelSerializer):
+    movies = CinemaMovieListSerializer(source='screening_set', many=True, read_only=True)
+
     class Meta:
         model = Cinema
-        fields = ('id', 'name', 'city')
+        fields = ('id', 'name', 'city', 'movies')
 
 
 class ScreeningSerializer(serializers.ModelSerializer):
