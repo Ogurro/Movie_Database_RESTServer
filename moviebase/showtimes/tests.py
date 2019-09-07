@@ -95,13 +95,7 @@ class CinemaTestCase(ShowtimesTestCase):
         response = self.client.post('/cinemas/', new_cinema, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Cinema.objects.count(), cinemas_before + 1)
-        for key, val in new_cinema.items():
-            self.assertIn(key, response.data)
-            if isinstance(val, list):
-                # Compare contents regardless of their order
-                self.assertCountEqual(response.data[key], val)
-            else:
-                self.assertEqual(response.data[key], val)
+        self._compare_key_val(response, new_cinema)
 
     def test_get_cinema_list(self):
         response = self.client.get('/movies/', {}, format='json')
@@ -150,13 +144,7 @@ class ScreeningTestCase(ShowtimesTestCase):
         # change date to match format of date in response.data
         new_screening['date'] = datetime.strftime(new_screening['date'], '%Y-%m-%dT%H:%M:%SZ')
 
-        for key, val in new_screening.items():
-            self.assertIn(key, response.data)
-            if isinstance(val, list):
-                # Compare contents regardless of their order
-                self.assertCountEqual(response.data[key], val)
-            else:
-                self.assertEqual(response.data[key], val)
+        self._compare_key_val(response, new_screening)
 
     def test_get_screening_list(self):
         response = self.client.get('/screenings/', {}, format='json')

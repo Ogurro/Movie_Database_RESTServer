@@ -71,6 +71,15 @@ class MovielistTestCase(APITestCase):
         for actor in actors:
             new_movie.actors.add(self._find_person_by_name(actor))
 
+    def _compare_key_val(self, response, obj):
+        for key, val in obj.items():
+            self.assertIn(key, response.data)
+            if isinstance(val, list):
+                # Compare contents regardless of their order
+                self.assertCountEqual(response.data[key], val)
+            else:
+                self.assertEqual(response.data[key], val)
+
 
 class MovieTestCase(MovielistTestCase):
     """Tests for Movie Views"""
@@ -81,13 +90,7 @@ class MovieTestCase(MovielistTestCase):
         response = self.client.post("/movies/", new_movie, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Movie.objects.count(), movies_before + 1)
-        for key, val in new_movie.items():
-            self.assertIn(key, response.data)
-            if isinstance(val, list):
-                # Compare contents regardless of their order
-                self.assertCountEqual(response.data[key], val)
-            else:
-                self.assertEqual(response.data[key], val)
+        self._compare_key_val(response, new_movie)
 
     def test_get_movie_list(self):
         response = self.client.get("/movies/", {}, format='json')
