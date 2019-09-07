@@ -3,29 +3,54 @@ from movielist.tests import MovielistTestCase
 from .models import Cinema, Screening
 
 from django.utils import timezone
+
 from random import randint
+from datetime import datetime
 
 
 class ShowtimesTestCase(MovielistTestCase):
     def setUp(self):
         super(ShowtimesTestCase, self).setUp()
         for _ in range(3):
-            Cinema.objects.create(name=self.faker.company(), city=self.faker.city())
+            Cinema.objects.create(**self._fake_cinema_data())
         for cinema in Cinema.objects.all():
             for _ in range(3):
-                movie = self._get_random_movie()
-                date = self.faker.date_time_between(start_date="now", end_date="+1y",
-                                                    tzinfo=timezone.get_current_timezone())
-                Screening.objects.create(cinema=cinema, movie=movie, date=date)
+                Screening.objects.create(**self._fake_screening_data(cinema=cinema))
         self.cinema_id = self._get_cinema_id()
+        self.screening_id = self._get_screening_id()
 
     @staticmethod
     def _get_random_cinema():
+        """Return random cinema from db"""
         cinemas = Cinema.objects.all()
         return cinemas[randint(0, len(cinemas) - 1)]
 
     def _get_cinema_id(self):
+        """Return id of random cinema from db"""
         return self._get_random_cinema().id
+
+    def _get_cinema_name(self):
+        """Return name of random cinema from db"""
+        return self._get_random_cinema().name
+
+    def _get_cinema_city(self):
+        """Return city of random cinema from db"""
+        return self._get_random_cinema().city
+
+    def _get_cinema_movie_title(self):
+        """Return title of random movie in cinema from db"""
+        screenings = self._get_random_cinema().screening_set.all()
+        return screenings[randint(0, len(screenings) - 1)].movie.title
+
+    @staticmethod
+    def _get_random_screening():
+        """Return random screening from db"""
+        screenings = Screening.objects.all()
+        return screenings[randint(0, len(screenings) - 1)]
+
+    def _get_screening_id(self):
+        """Return id of random screening from db"""
+        return self._get_random_screening().id
 
     def _fake_cinema_data(self):
         cinema_data = {
@@ -33,6 +58,29 @@ class ShowtimesTestCase(MovielistTestCase):
             'city': self.faker.city(),
         }
         return cinema_data
+
+    def _fake_screening_data(self, cinema=None):
+        """
+        Returns screening data:
+        if cinema is specified, it's used and random movie instance is inserted
+        otherwise random cinema.name and movie.title is used
+        """
+        screening_data = {
+            'cinema': cinema if cinema else self._get_cinema_name(),
+            'movie': self._get_random_movie() if cinema else self._get_movie_title(),
+            'date': self._get_random_date()
+        }
+        return screening_data
+
+    def _get_random_date(self):
+        """
+        Returns new formatted date within range(now, +1 year)
+        date format: %Y-%m-%dT%H:%M:%SZ
+        """
+        date = self.faker.date_time_between(start_date="now", end_date="+1y",
+                                            tzinfo=timezone.get_current_timezone())
+        # date = datetime.strftime(date, '%Y-%m-%dT%H:%M:%SZ')
+        return date
 
 
 class CinemaTestCase(ShowtimesTestCase):
