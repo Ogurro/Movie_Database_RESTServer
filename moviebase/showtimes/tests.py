@@ -131,3 +131,55 @@ class CinemaTestCase(ShowtimesTestCase):
         cinema_obj = Cinema.objects.get(id=self.cinema_id)
         self.assertEqual(cinema_obj.name, new_name)
         self.assertEqual(cinema_obj.city, new_city)
+
+
+class ScreeningTestCase(ShowtimesTestCase):
+
+    def test_post_screening(self):
+        screenings_before = Screening.objects.count()
+        new_screening = self._fake_screening_data()
+        response = self.client.post('/screenings/', new_screening, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Screening.objects.count(), screenings_before + 1)
+
+        # change date to match format of date in response.data
+        new_screening['date'] = datetime.strftime(new_screening['date'], '%Y-%m-%dT%H:%M:%SZ')
+
+        for key, val in new_screening.items():
+            self.assertIn(key, response.data)
+            if isinstance(val, list):
+                # Compare contents regardless of their order
+                self.assertCountEqual(response.data[key], val)
+            else:
+                self.assertEqual(response.data[key], val)
+
+    def test_get_screening_list(self):
+        response = self.client.get('/screenings/', {}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Screening.objects.count(), len(response.data))
+
+    def test_get_screening_detail(self):
+        response = self.client.get(f'/screenings/{self.screening_id}/', {}, format='json')
+        self.assertEqual(response.status_code, 200)
+        for field in ['cinema', 'movie', 'date']:
+            self.assertIn(field, response.data)
+
+    def test_delete_screening(self):
+        response = self.client.delete(f'/screenings/{self.screening_id}/', {}, format='json')
+        self.assertEqual(response.status_code, 204)
+        screening_ids = [screening.id for screening in Screening.objects.all()]
+        self.assertNotIn(self.screening_id, screening_ids)
+
+    def test_update_screening(self):
+        response = self.client.get(f'/screenings/{self.screening_id}/', {}, format='json')
+        self.assertEqual(response.status_code, 200)
+        screening_data = response.data
+        new_movie = self._get_movie_title()
+        screening_data['movie'] = new_movie
+        new_date = self._get_random_date()
+        screening_data['date'] = new_date
+        response = self.client.patch(f'/screenings/{self.screening_id}/', screening_data, format='json')
+        self.assertEqual(response.status_code, 200)
+        screening = Screening.objects.get(id=self.screening_id)
+        self.assertEqual(screening.movie.title, new_movie)
+        self.assertEqual(screening.date, new_date)
