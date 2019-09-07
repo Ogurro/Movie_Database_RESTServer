@@ -12,6 +12,6 @@ class Cinema(models.Model):
 
 
 class Screening(models.Model):
-    cinema = models.ForeignKey(Cinema, on_delete=models.PROTECT)
+    cinema = models.ForeignKey(Cinema, on_delete=models.CASCADE)
     movie = models.ForeignKey(Movie, on_delete=models.PROTECT)
     date = models.DateTimeField()

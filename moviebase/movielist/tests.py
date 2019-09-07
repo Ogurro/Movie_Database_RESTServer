@@ -1,13 +1,13 @@
 from random import randint, sample
 
 from faker import Faker
-from rest_framework.test import APITestCase, APIRequestFactory
+from rest_framework.test import APITestCase
 
 from movielist.models import Movie, Person
-from movielist.serializers import MovieSerializer
 
 
-class MovieTestCase(APITestCase):
+class MovielistTestCase(APITestCase):
+    """Creates APITestCase with setUp for multiple use in different applications (i.e. showtimes)"""
 
     def setUp(self):
         """Populate test database with random data."""
@@ -16,14 +16,30 @@ class MovieTestCase(APITestCase):
             Person.objects.create(name=self.faker.name())
         for _ in range(3):
             self._create_fake_movie()
-        self.movie_id = Movie.objects.all()[randint(0, 2)].id
+        self.movie_id = self._get_movie_id()
 
-    def _random_person(self):
+    @staticmethod
+    def _get_random_movie():
+        """Return random movie from db"""
+        movies = Movie.objects.all()
+        return movies[randint(0, len(movies) - 1)]
+
+    def _get_movie_title(self):
+        """Return title of random movie from db"""
+        return self._get_random_movie().title
+
+    def _get_movie_id(self):
+        """Return a id for random Movie object from db"""
+        return self._get_random_movie().id
+
+    @staticmethod
+    def _random_person():
         """Return a random Person object from db."""
         people = Person.objects.all()
         return people[randint(0, len(people) - 1)]
 
-    def _find_person_by_name(self, name):
+    @staticmethod
+    def _find_person_by_name(name):
         """Return the first `Person` object that matches `name`."""
         return Person.objects.filter(name=name).first()
 
@@ -55,19 +71,26 @@ class MovieTestCase(APITestCase):
         for actor in actors:
             new_movie.actors.add(self._find_person_by_name(actor))
 
-    def test_post_movie(self):
-        movies_before = Movie.objects.count()
-        new_movie = self._fake_movie_data()
-        response = self.client.post("/movies/", new_movie, format='json')
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(Movie.objects.count(), movies_before + 1)
-        for key, val in new_movie.items():
+    def _compare_key_val(self, response, obj):
+        for key, val in obj.items():
             self.assertIn(key, response.data)
             if isinstance(val, list):
                 # Compare contents regardless of their order
                 self.assertCountEqual(response.data[key], val)
             else:
                 self.assertEqual(response.data[key], val)
+
+
+class MovieTestCase(MovielistTestCase):
+    """Tests for Movie Views"""
+
+    def test_post_movie(self):
+        movies_before = Movie.objects.count()
+        new_movie = self._fake_movie_data()
+        response = self.client.post("/movies/", new_movie, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Movie.objects.count(), movies_before + 1)
+        self._compare_key_val(response, new_movie)
 
     def test_get_movie_list(self):
         response = self.client.get("/movies/", {}, format='json')
