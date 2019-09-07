@@ -20,8 +20,13 @@ class MovielistTestCase(APITestCase):
 
     @staticmethod
     def _get_random_movie():
+        """Return random movie from db"""
         movies = Movie.objects.all()
         return movies[randint(0, len(movies) - 1)]
+
+    def _get_movie_title(self):
+        """Return title of random movie from db"""
+        return self._get_random_movie().title
 
     def _get_movie_id(self):
         """Return a id for random Movie object from db"""
