@@ -1,29 +1,37 @@
 from random import randint, sample
 
 from faker import Faker
-from rest_framework.test import APITestCase, APIRequestFactory
+from rest_framework.test import APITestCase
 
 from movielist.models import Movie, Person
-from movielist.serializers import MovieSerializer
 
 
-class MovieTestCase(APITestCase):
+class MovieListTestCase(APITestCase):
+    """Creates APITestCase with set up for multiple use in different applications (i.e. showtimes)"""
 
     def setUp(self):
         """Populate test database with random data."""
-        self.faker = Faker("pl_PL")
+        self.faker = Faker("en_GB")
         for _ in range(5):
             Person.objects.create(name=self.faker.name())
         for _ in range(3):
             self._create_fake_movie()
-        self.movie_id = Movie.objects.all()[randint(0, 2)].id
+        self.movie_id = self._get_movie_id()
 
-    def _random_person(self):
+    @staticmethod
+    def _get_movie_id():
+        """Return a id for random Movie object from db"""
+        movies = Movie.objects.all()
+        return movies[randint(0, len(movies) - 1)].id
+
+    @staticmethod
+    def _random_person():
         """Return a random Person object from db."""
         people = Person.objects.all()
         return people[randint(0, len(people) - 1)]
 
-    def _find_person_by_name(self, name):
+    @staticmethod
+    def _find_person_by_name(name):
         """Return the first `Person` object that matches `name`."""
         return Person.objects.filter(name=name).first()
 
@@ -54,6 +62,9 @@ class MovieTestCase(APITestCase):
         new_movie = Movie.objects.create(**movie_data)
         for actor in actors:
             new_movie.actors.add(self._find_person_by_name(actor))
+
+
+class MovieTestCase(MovieListTestCase):
 
     def test_post_movie(self):
         movies_before = Movie.objects.count()
