@@ -3,6 +3,7 @@ from movielist.tests import MovielistTestCase
 from .models import Cinema, Screening
 
 from django.utils import timezone
+from django.db.models import Q
 
 from random import randint
 from datetime import datetime
@@ -183,3 +184,72 @@ class ScreeningTestCase(ShowtimesTestCase):
         screening = Screening.objects.get(id=self.screening_id)
         self.assertEqual(screening.movie.title, new_movie)
         self.assertEqual(screening.date, new_date)
+
+    def test_get_filtered_screening(self):
+        # get random city and movie_tittle
+        random_cinema = self._get_random_cinema()
+        random_cinema_city = random_cinema.city
+        random_movie = self._get_random_movie()
+        random_movie_tittle = random_movie.title
+
+        # prepare data for future test
+        new_screening = {
+            'cinema': random_cinema.name,
+            'movie': random_movie.title,
+            'date': self._get_random_date(),
+        }
+
+        # split text via ' '
+        random_cinema_city = random_cinema_city.split(' ')
+        random_movie_tittle = random_movie_tittle.split(' ')
+        # pick one word from list
+        random_cinema_city = random_cinema_city[randint(0, len(random_cinema_city) - 1)]
+        random_movie_tittle = random_movie_tittle[randint(0, len(random_movie_tittle) - 1)]
+
+        self.response_get_filtered_screening(city=random_cinema_city)
+        self.response_get_filtered_screening(movie_title=random_movie_tittle)
+        response = self.response_get_filtered_screening(city=random_cinema_city, movie_title=random_movie_tittle)
+
+        # repeat search with city and movie tittle after adding new screening to db
+        before_screening_count = len(response.data)
+        response = self.client.post('/screenings/', new_screening, format='json')
+        self.assertEqual(response.status_code, 201)
+        response = self.response_get_filtered_screening(city=random_cinema_city, movie_title=random_movie_tittle)
+        self.assertEqual(len(response.data), before_screening_count + 1)
+
+    def response_get_filtered_screening(self, *, city=None, movie_title=None):
+        """
+        Prepares URL and screening_ids which depends on passed keyword arguments
+        At least one of keyword arguments is required: city or movie_tittle
+        Returns response from test for future use
+        """
+        if not city and not movie_title:
+            raise AttributeError('need at least one keyword argument: city or movie_tittle')
+        # prepare url
+        url = '/screenings/'
+        if city and movie_title:
+            url += f'?city={city}&movie={movie_title}'
+        elif city:
+            url += f'?city={city}'
+        else:
+            url += f'?movie={movie_title}'
+
+        response = self.client.get(url, {}, format='json')
+        self.assertEqual(response.status_code, 200)
+
+        # prepare screening_ids
+        if city and movie_title:
+            screening_ids = [screening.id for screening in
+                             Screening.objects.filter(
+                                 Q(cinema__city__contains=city, movie__title__icontains=movie_title))
+                             ]
+        elif city:
+            screening_ids = [screening.id for screening in Screening.objects.filter(Q(cinema__city__contains=city))]
+        else:
+            screening_ids = [screening.id for screening in
+                             Screening.objects.filter(Q(movie__title__icontains=movie_title))
+                             ]
+
+        for obj in response.data:
+            self.assertIn(obj['id'], screening_ids)
+        return response
