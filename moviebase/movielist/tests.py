@@ -6,12 +6,12 @@ from rest_framework.test import APITestCase
 from movielist.models import Movie, Person
 
 
-class MovieListTestCase(APITestCase):
+class MovielistTestCase(APITestCase):
     """Creates APITestCase with set up for multiple use in different applications (i.e. showtimes)"""
 
     def setUp(self):
         """Populate test database with random data."""
-        self.faker = Faker("en_GB")
+        self.faker = Faker("pl_PL")
         for _ in range(5):
             Person.objects.create(name=self.faker.name())
         for _ in range(3):
@@ -19,10 +19,13 @@ class MovieListTestCase(APITestCase):
         self.movie_id = self._get_movie_id()
 
     @staticmethod
-    def _get_movie_id():
-        """Return a id for random Movie object from db"""
+    def _get_random_movie():
         movies = Movie.objects.all()
-        return movies[randint(0, len(movies) - 1)].id
+        return movies[randint(0, len(movies) - 1)]
+
+    def _get_movie_id(self):
+        """Return a id for random Movie object from db"""
+        return self._get_random_movie().id
 
     @staticmethod
     def _random_person():
@@ -64,7 +67,7 @@ class MovieListTestCase(APITestCase):
             new_movie.actors.add(self._find_person_by_name(actor))
 
 
-class MovieTestCase(MovieListTestCase):
+class MovieTestCase(MovielistTestCase):
 
     def test_post_movie(self):
         movies_before = Movie.objects.count()
