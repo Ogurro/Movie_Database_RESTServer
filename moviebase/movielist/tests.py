@@ -7,7 +7,7 @@ from movielist.models import Movie, Person
 
 
 class MovielistTestCase(APITestCase):
-    """Creates APITestCase with set up for multiple use in different applications (i.e. showtimes)"""
+    """Creates APITestCase with setUp for multiple use in different applications (i.e. showtimes)"""
 
     def setUp(self):
         """Populate test database with random data."""
@@ -73,6 +73,7 @@ class MovielistTestCase(APITestCase):
 
 
 class MovieTestCase(MovielistTestCase):
+    """Tests for Movie Views"""
 
     def test_post_movie(self):
         movies_before = Movie.objects.count()

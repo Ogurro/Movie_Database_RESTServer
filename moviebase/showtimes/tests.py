@@ -10,6 +10,8 @@ from datetime import datetime
 
 
 class ShowtimesTestCase(MovielistTestCase):
+    """Extends MovielistTestCase < APITestCase for multiple test use in different applications"""
+
     def setUp(self):
         super(ShowtimesTestCase, self).setUp()
         for _ in range(3):
@@ -85,6 +87,7 @@ class ShowtimesTestCase(MovielistTestCase):
 
 
 class CinemaTestCase(ShowtimesTestCase):
+    """Tests for Cinema Views"""
 
     def test_post_cinema(self):
         cinemas_before = Cinema.objects.count()
@@ -135,6 +138,7 @@ class CinemaTestCase(ShowtimesTestCase):
 
 
 class ScreeningTestCase(ShowtimesTestCase):
+    """Tests for Screening Views"""
 
     def test_post_screening(self):
         screenings_before = Screening.objects.count()
